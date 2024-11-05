@@ -17,7 +17,10 @@ FarmaCLI es una aplicación CLI que busca poder extraer información del [Listad
 
 ## Instalación del repositorio de manera local
 
-Cabe aclarar que este proyecto hace uso de `Java 17` por lo que se recomienda verificar que esté instalado al menos esta versión en el dispositivo donde se vaya a utilizar. De la misma forma, esta aplicación hace uso de las `variables de entorno del sistema` que se necesitan configurar antes de hacer uso de la misma, ya que de esta forma logramos trabajar colaborativamente con el proyecto sin necesitar modificar el código cada vez que se clone el repositorio en un dispositivo nuevo.
+Requerimientos previos para poder hacer uso de FarmaCLI:
+* `Java 17 SDK`
+* `Variables de entorno del sistema` (que se necesitan configurar antes de hacer uso de la misma)
+* IDE: `Jetbrains Intellij IDEA`, `Eclipse` o `Visual Studio Code` (con pack de extensiones de JAVA)
 
 <details>
   <summary>Instalación usando git clone 🔧</summary>
@@ -48,3 +51,5 @@ Sigue estos pasos para clonar el repositorio e instalar las dependencias necesar
 
 2. **Descomprimir el archivo**
 </details>
+
+Por último, abrir el proyecto con el IDE elegido, y ejecutando `Main.java` ya se puede hacer uso de FarmaCLI!
