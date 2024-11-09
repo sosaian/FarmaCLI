@@ -45,7 +45,8 @@ public class Main {
                 "1. Mostrar todo el listado de medicamentos",
                 "2. Mostrar los hashmaps",
                 "3. Buscar por código de medicamento",
-                "4. Salir de la aplicación"
+                "4. Buscar por nombre de medicamento",
+                "5. Salir de la aplicación"
         );
 
         boolean seguirEnLaApp = true;
@@ -59,7 +60,7 @@ public class Main {
 
             opcionActual = scanner.nextInt();
 
-            while ((opcionActual < 1) || (opcionActual > 4)) {
+            while ((opcionActual < 1) || (opcionActual > 5)) {
                 System.out.println("Por favor escriba el número de la tarea a realizar:");
                 for (String opcion : opciones) { System.out.println(opcion); }
 
@@ -82,6 +83,10 @@ public class Main {
                     break;
 
                 case 4:
+                    buscarPorNombre(RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorNombre);
+                    break;
+
+                case 5:
                     seguirEnLaApp = false;
                     continue; // Terminar iteración del while(seguirEnLaApp) para cerrar la aplicación.
 
@@ -266,6 +271,91 @@ public class Main {
                 bufferedWriter.write(medicamento[i]);
 
                 if (i < CATEGORIAS.size() - 1) { bufferedWriter.newLine(); }
+            }
+
+            System.out.println();
+            System.out.println("Resultados de esta búsqueda guardados en: " + RESULT_PATH + "\\" + nombreArchivo);
+        } catch (IOException e) {
+            System.err.println("Error al escribir en el archivo: " + e.getMessage());
+        }
+    }
+
+    public static void buscarPorNombre(String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, List<Integer>> hashMapPorNombre) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println();
+        System.out.print("Ingrese el nombre del medicamento a buscar: ");
+        String nombreMedicamento = scanner.nextLine();
+
+        List<Integer> indicesResultado = hashMapPorNombre.get(nombreMedicamento);
+
+        System.out.println();
+
+        // Agregar isEmpty() hace a este método agnóstico de alguna implementación específica de cargarDatosDesdeCSV()
+        if (indicesResultado == null || indicesResultado.isEmpty()) {
+            System.out.println("No se encontró ninguna coincidencia!");
+            return;
+        }
+
+        // Creamos listadoMedicamentos aplicando un flujo de datos (Stream) en una sola línea:
+        // 1. `.stream()`: convierte indicesResultado en un flujo de sus elementos.
+        // 2. `.map(VADEMECUM::get)`: para cada índice en indicesResultado, obtenemos el elemento en VADEMECUM.
+        // 3. `.toList()`: recopila todos los elementos convertidos en una lista inmutable. (propio de Java 16)
+
+        List<String[]> listadoMedicamentos = indicesResultado.stream().map(VADEMECUM::get).toList();
+
+        //
+        //
+        // Mostrar resultado en consola
+        //
+        //
+
+        for (int i = 0; i < listadoMedicamentos.size();  i++) {
+            String[] medicamento = listadoMedicamentos.get(i);
+
+            if (i != 0) { System.out.println(); }
+
+            for (int j = 0; j < CATEGORIAS.size(); j++) {
+                System.out.print(CATEGORIAS.get(j));
+                System.out.print(": ");
+                System.out.print(medicamento[j]);
+
+                if (j < CATEGORIAS.size() - 1) {
+                    System.out.println();
+                }
+            }
+
+            System.out.println();
+            System.out.println("-".repeat(40));
+        }
+
+        //
+        //
+        // Guardar resultado en un archivo .txt
+        //
+        //
+
+        String nombreArchivo = "resultados_nombre_medicamento_" + nombreMedicamento + ".txt";
+
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(RESULT_PATH + "\\" + nombreArchivo))) {
+            for (int i = 0; i < listadoMedicamentos.size();  i++) {
+                String[] medicamento = listadoMedicamentos.get(i);
+
+                if (i != 0) { bufferedWriter.newLine(); }
+
+                for (int j = 0; j < CATEGORIAS.size(); j++) {
+                    bufferedWriter.write(CATEGORIAS.get(j));
+                    bufferedWriter.write(": ");
+                    bufferedWriter.write(medicamento[j]);
+
+                    if (j < CATEGORIAS.size() - 1) {
+                        bufferedWriter.newLine();
+                    }
+                }
+
+                bufferedWriter.newLine();
+                bufferedWriter.write("-".repeat(40));
+                bufferedWriter.newLine();
             }
 
             System.out.println();
