@@ -82,6 +82,8 @@ public class Main {
     public static boolean confirmarSeguirEnLaApp() {
         Scanner scanner = new Scanner(System.in);
 
+        System.out.println();
+
         System.out.println("¿Desea continuar en la app? sí/no ");
         String respuesta = scanner.nextLine();
 
@@ -90,6 +92,7 @@ public class Main {
             respuesta = scanner.nextLine();
         }
 
+        System.out.println();
         System.out.println("----------------");
 
         return ( respuesta.equalsIgnoreCase("si") || respuesta.equalsIgnoreCase("sí") );
