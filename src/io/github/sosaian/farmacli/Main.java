@@ -1,21 +1,12 @@
 package io.github.sosaian.farmacli;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Declaración de variables globales de la aplicación*
+        // Declaración de variables globales de la aplicación
         String CSV_PATH = System.getenv("FARMACLI_CSV_PATH");
         String RESULT_PATH = System.getenv("FARMACLI_RESULT_PATH");
         String SEPARADOR = ";"; // Para poder rápidamente cambiarlo acorde al formato del archivo.
@@ -33,7 +24,6 @@ public class Main {
 
         // Al buscar por nombre, la búsqueda muestra todas las presentaciones del medicamento en VADEMECUM.
         HashMap<String, List<Integer>> hashMapPorNombre = new HashMap<>();
-        // ***************************************************
 
         // Antes de iniciar, extraer información del CSV
         cargarDatosDesdeCSV(CSV_PATH, SEPARADOR, CATEGORIAS, VADEMECUM, maxAnchos, hashMapPorCodigo, hashMapPorNombre);
@@ -50,7 +40,6 @@ public class Main {
         );
 
         boolean seguirEnLaApp = true;
-        int opcionActual;
         Scanner scanner = new Scanner(System.in);
 
         while (seguirEnLaApp) {
@@ -58,16 +47,7 @@ public class Main {
             System.out.println("Menú principal - Escriba el número de la tarea a realizar:");
             for (String opcion : opciones) { System.out.println(opcion); }
 
-            opcionActual = scanner.nextInt();
-
-            while ((opcionActual < 1) || (opcionActual > 5)) {
-                System.out.println("Por favor escriba el número de la tarea a realizar:");
-                for (String opcion : opciones) { System.out.println(opcion); }
-
-                opcionActual = scanner.nextInt();
-            }
-
-            scanner.nextLine();  // Limpia el salto de línea del buffer
+            int opcionActual = obtenerOpcionValida(scanner);  // Validación de entrada para la opción
 
             switch (opcionActual) {
                 case 1:
@@ -96,7 +76,7 @@ public class Main {
 
             System.out.println();
             System.out.println("----------------");
-            seguirEnLaApp = confirmarSeguirEnLaApp();
+            seguirEnLaApp = confirmarSeguirEnLaApp(scanner);
         }
 
         System.out.println();
@@ -105,26 +85,39 @@ public class Main {
         scanner.close(); // Cierro el scanner para prevenir filtrado de información
     }
 
-    public static void cargarDatosDesdeCSV(String ARCHIVO, String SEPARADOR, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, ArrayList<Integer> maxAnchos, HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
-        // Dado que el archivo CSV provisto oficialmente acorde al README.md está codificado en ANSI, haciendo uso del ISO 8859-1 se puede hacer correctamente la lectura del archivo.
+    // Método para obtener una opción válida del usuario
+    public static int obtenerOpcionValida(Scanner scanner) {
+        int opcion = -1;
+        while (opcion < 1 || opcion > 5) {
+            System.out.println("Por favor ingrese una opción válida:");
+            try {
+                opcion = Integer.parseInt(scanner.nextLine()); // Intentamos leer un número
+            } catch (NumberFormatException e) {
+                System.out.println("¡Error! Debe ingresar un número válido.");
+                continue; // Si no es un número, volvemos a pedir la opción
+            }
+            
+            if (opcion < 1 || opcion > 5) {
+                System.out.println("Opción no válida. Elija entre 1 y 5.");
+            }
+        }
+        return opcion;
+    }
 
+    public static void cargarDatosDesdeCSV(String ARCHIVO, String SEPARADOR, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, ArrayList<Integer> maxAnchos, HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(ARCHIVO), StandardCharsets.ISO_8859_1))) {
             String linea = br.readLine(); // linea inicializa con ENCABEZADO del CSV
 
-            // Remover coma final si existe
             if (linea.endsWith(",")) { linea = linea.substring(0, linea.length() - 1); }
 
-            // Aprovechando métodos propios de los ArrayList agrego cada uno de los strings al hacer linea.split()
             CATEGORIAS.addAll(Arrays.asList(linea.split(SEPARADOR)));
 
             for (String categoria : CATEGORIAS) { maxAnchos.add(categoria.length()); }
 
             while ((linea = br.readLine()) != null) {
                 linea = linea.trim();
+                if (linea.isEmpty()) { continue; }
 
-                if (linea.isEmpty()) { continue; } // Previene errores si hay líneas en blanco en el CSV
-
-                // Remover coma final si existe
                 if (linea.endsWith(",")) { linea = linea.substring(0, linea.length() - 1); }
 
                 String[] entrada = linea.split(SEPARADOR);
@@ -133,16 +126,14 @@ public class Main {
                     maxAnchos.set( i, Math.max( maxAnchos.get(i), entrada[i].length() ) );
                 }
 
-                VADEMECUM.add(entrada); // En VADEMECUM se guarda toda la información de cada medicamento.
+                VADEMECUM.add(entrada);
 
                 Integer indiceEnVademecum = VADEMECUM.size() - 1;
-                String nombreMedicamento = entrada[1];
+                String nombreMedicamento = entrada[1].toLowerCase(); // Guardamos los nombres en minúsculas
 
                 hashMapPorCodigo.put(entrada[0], indiceEnVademecum);
 
-                // El metodo computeIfAbsent permite devolver la lista asociada si existe, o sino crearla allí mismo.
                 List<Integer> indices = hashMapPorNombre.computeIfAbsent(nombreMedicamento, k -> new ArrayList<>());
-
                 indices.add(indiceEnVademecum);
             }
         } catch (IOException e) {
@@ -163,20 +154,14 @@ public class Main {
 
         for (int i = 0; i < CATEGORIAS.size(); i++) {
             String fila = CATEGORIAS.get(i);
-
             System.out.printf("%-" + (maxAnchos.get(i) + 1) + "s", fila);
-
-            // Añadimos un separador " | " solo entre columnas
             if (i < CATEGORIAS.size() - 1) { System.out.print("| "); }
         }
 
         System.out.println();
 
-        // Luego del encabezado, imprimimos una línea separadora1
         for (int j = 0; j < maxAnchos.size(); j++) {
             System.out.print("-".repeat(maxAnchos.get(j) + 1));
-
-            // Añadimos un separador solo entre columnas
             if (j < maxAnchos.size() - 1) {
                 System.out.print("+-");
             }
@@ -185,11 +170,8 @@ public class Main {
         System.out.println();
 
         for (String[] fila : VADEMECUM) {
-            // Imprimimos cada celda de la fila con el ancho calculado y bordes entre columnas
             for (int j = 0; j < fila.length; j++) {
                 System.out.printf("%-" + (maxAnchos.get(j) + 1) + "s", fila[j]);
-
-                // Añadimos un separador " | " solo entre columnas
                 if (j < fila.length - 1) {
                     System.out.print("| ");
                 }
@@ -204,9 +186,7 @@ public class Main {
             return;
         }
 
-        System.out.println();
         System.out.println("hashMapPorCodigo: ");
-        System.out.println();
         hashMapPorCodigo.forEach((key, value) -> System.out.println(key + " - " + value));
 
         if (hashMapPorNombre.isEmpty()) {
@@ -214,11 +194,7 @@ public class Main {
             return;
         }
 
-        System.out.println();
-        System.out.println("-----------------------------------------------------------------------");
-        System.out.println();
         System.out.println("hashMapPorNombre: ");
-        System.out.println();
         hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
     }
 
@@ -231,8 +207,6 @@ public class Main {
 
         Integer indiceResultado = hashMapPorCodigo.get(codigoMedicamento);
 
-        System.out.println();
-
         if (indiceResultado == null) {
             System.out.println("No se encontró ninguna coincidencia!");
             return;
@@ -240,147 +214,100 @@ public class Main {
 
         String[] medicamento = VADEMECUM.get(indiceResultado);
 
-        //
-        //
-        // Mostrar resultado en consola
-        //
-        //
-
         for (int i = 0; i < CATEGORIAS.size(); i++) {
             System.out.print(CATEGORIAS.get(i));
             System.out.print(": ");
-            System.out.print(medicamento[i]);
-
-            if (i < CATEGORIAS.size() - 1) { System.out.println(); }
+            System.out.println(medicamento[i]);
         }
 
-        System.out.println();
-
-        //
-        //
-        // Guardar resultado en un archivo .txt
-        //
-        //
-
-        String nombreArchivo = "resultado_codigo_medicamento_" + codigoMedicamento + ".txt";
-
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(RESULT_PATH + "\\" + nombreArchivo))) {
-            for (int i = 0; i < CATEGORIAS.size(); i++) {
-                bufferedWriter.write(CATEGORIAS.get(i));
-                bufferedWriter.write(": ");
-                bufferedWriter.write(medicamento[i]);
-
-                if (i < CATEGORIAS.size() - 1) { bufferedWriter.newLine(); }
-            }
-
-            System.out.println();
-            System.out.println("Resultados de esta búsqueda guardados en: " + RESULT_PATH + "\\" + nombreArchivo);
-        } catch (IOException e) {
-            System.err.println("Error al escribir en el archivo: " + e.getMessage());
-        }
+        guardarResultadosEnArchivo(scanner, RESULT_PATH, medicamento);
     }
 
     public static void buscarPorNombre(String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, List<Integer>> hashMapPorNombre) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println();
-        System.out.print("Ingrese el nombre del medicamento a buscar: ");
-        String nombreMedicamento = scanner.nextLine();
+        System.out.print("Ingrese el nombre del medicamento a buscar (o escriba 'salir' para cancelar): ");
+        String nombreMedicamento = scanner.nextLine().trim();
 
-        List<Integer> indicesResultado = hashMapPorNombre.get(nombreMedicamento);
-
-        System.out.println();
-
-        // Agregar isEmpty() hace a este método agnóstico de alguna implementación específica de cargarDatosDesdeCSV()
-        if (indicesResultado == null || indicesResultado.isEmpty()) {
-            System.out.println("No se encontró ninguna coincidencia!");
+        if (nombreMedicamento.equalsIgnoreCase("salir")) {
+            System.out.println("Saliendo del proceso de búsqueda.");
             return;
         }
 
-        // Creamos listadoMedicamentos aplicando un flujo de datos (Stream) en una sola línea:
-        // 1. `.stream()`: convierte indicesResultado en un flujo de sus elementos.
-        // 2. `.map(VADEMECUM::get)`: para cada índice en indicesResultado, obtenemos el elemento en VADEMECUM.
-        // 3. `.toList()`: recopila todos los elementos convertidos en una lista inmutable. (propio de Java 16)
+        nombreMedicamento = nombreMedicamento.toLowerCase(); // Convertimos a minúsculas
+        List<Integer> indicesResultado = hashMapPorNombre.get(nombreMedicamento);
 
-        List<String[]> listadoMedicamentos = indicesResultado.stream().map(VADEMECUM::get).toList();
-
-        //
-        //
-        // Mostrar resultado en consola
-        //
-        //
-
-        for (int i = 0; i < listadoMedicamentos.size();  i++) {
-            String[] medicamento = listadoMedicamentos.get(i);
-
-            if (i != 0) { System.out.println(); }
-
-            for (int j = 0; j < CATEGORIAS.size(); j++) {
-                System.out.print(CATEGORIAS.get(j));
-                System.out.print(": ");
-                System.out.print(medicamento[j]);
-
-                if (j < CATEGORIAS.size() - 1) {
-                    System.out.println();
-                }
-            }
-
-            System.out.println();
-            System.out.println("-".repeat(40));
+        if (indicesResultado == null || indicesResultado.isEmpty()) {
+            System.out.println("No se encontraron resultados para el medicamento \"" + nombreMedicamento + "\".");
+            return;
         }
 
-        //
-        //
-        // Guardar resultado en un archivo .txt
-        //
-        //
+        System.out.println("Se encontraron los siguientes resultados:");
+        for (Integer indice : indicesResultado) {
+            String[] medicamento = VADEMECUM.get(indice);
 
-        String nombreArchivo = "resultados_nombre_medicamento_" + nombreMedicamento + ".txt";
-
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(RESULT_PATH + "\\" + nombreArchivo))) {
-            for (int i = 0; i < listadoMedicamentos.size();  i++) {
-                String[] medicamento = listadoMedicamentos.get(i);
-
-                if (i != 0) { bufferedWriter.newLine(); }
-
-                for (int j = 0; j < CATEGORIAS.size(); j++) {
-                    bufferedWriter.write(CATEGORIAS.get(j));
-                    bufferedWriter.write(": ");
-                    bufferedWriter.write(medicamento[j]);
-
-                    if (j < CATEGORIAS.size() - 1) {
-                        bufferedWriter.newLine();
-                    }
-                }
-
-                bufferedWriter.newLine();
-                bufferedWriter.write("-".repeat(40));
-                bufferedWriter.newLine();
+            for (int i = 0; i < CATEGORIAS.size(); i++) {
+                System.out.print(CATEGORIAS.get(i));
+                System.out.print(": ");
+                System.out.println(medicamento[i]);
             }
 
-            System.out.println();
-            System.out.println("Resultados de esta búsqueda guardados en: " + RESULT_PATH + "\\" + nombreArchivo);
-        } catch (IOException e) {
-            System.err.println("Error al escribir en el archivo: " + e.getMessage());
+            System.out.println("-----------------------------");
+        }
+
+        guardarResultadosEnArchivo(scanner, RESULT_PATH, indicesResultado, VADEMECUM, CATEGORIAS);
+    }
+
+    public static void guardarResultadosEnArchivo(Scanner scanner, String RESULT_PATH, String[] medicamento) {
+        System.out.println("¿Desea guardar los resultados en un archivo? (si/no)");
+        String respuestaGuardar = scanner.nextLine().trim().toLowerCase();
+
+        if (respuestaGuardar.equals("si")) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(RESULT_PATH))) {
+                for (String campo : medicamento) {
+                    writer.write(campo + ";");
+                }
+                writer.newLine();
+                System.out.println("Resultados guardados correctamente en " + RESULT_PATH);
+            } catch (IOException e) {
+                System.out.println("Error al guardar los resultados: " + e.getMessage());
+            }
         }
     }
 
-    public static boolean confirmarSeguirEnLaApp() {
-        Scanner scanner = new Scanner(System.in);
+    public static void guardarResultadosEnArchivo(Scanner scanner, String RESULT_PATH, List<Integer> indicesResultado, ArrayList<String[]> VADEMECUM, ArrayList<String> CATEGORIAS) {
+        System.out.println("¿Desea guardar los resultados en un archivo? (si/no)");
+        String respuestaGuardar = scanner.nextLine().trim().toLowerCase();
 
-        System.out.println();
-
-        System.out.println("¿Desea continuar en la app? sí/no ");
-        String respuesta = scanner.nextLine();
-
-        while ( !(respuesta.equalsIgnoreCase("si")) && !(respuesta.equalsIgnoreCase("sí")) && !(respuesta.equalsIgnoreCase("no")) ) {
-            System.out.println("Por favor ingrese `sí` para continuar o `no` para salir.");
-            respuesta = scanner.nextLine();
+        if (respuestaGuardar.equals("si")) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(RESULT_PATH))) {
+                for (Integer indice : indicesResultado) {
+                    String[] medicamento = VADEMECUM.get(indice);
+                    for (String campo : medicamento) {
+                        writer.write(campo + ";");
+                    }
+                    writer.newLine();
+                }
+                System.out.println("Resultados guardados correctamente en " + RESULT_PATH);
+            } catch (IOException e) {
+                System.out.println("Error al guardar los resultados: " + e.getMessage());
+            }
         }
+    }
 
-        System.out.println();
-        System.out.println("----------------");
+    public static boolean confirmarSeguirEnLaApp(Scanner scanner) {
+        while (true) {
+            System.out.println("¿Quieres realizar otra acción? (sí/no)");
+            String respuesta = scanner.nextLine().trim().toLowerCase();
 
-        return ( respuesta.equalsIgnoreCase("si") || respuesta.equalsIgnoreCase("sí") );
+            if (respuesta.equals("sí") || respuesta.equals("si")) {
+                return true;
+            } else if (respuesta.equals("no")) {
+                return false;
+            } else {
+                System.out.println("Por favor responde 'sí' o 'no'.");
+            }
+        }
     }
 }
