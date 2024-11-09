@@ -39,8 +39,9 @@ public class Main {
 
         // Listado de tareas para realizar con la aplicación.
         List<String> opciones = List.of(
-                "1. Mostrar el contenido del CSV",
-                "2. Salir de la aplicación"
+                "1. Mostrar todo el listado de medicamentos",
+                "2. Mostrar los hashmaps",
+                "3. Salir de la aplicación"
         );
 
         boolean seguirEnLaApp = true;
@@ -54,7 +55,7 @@ public class Main {
 
             opcionActual = scanner.nextInt();
 
-            while ((opcionActual < 1) || (opcionActual > 2)) {
+            while ((opcionActual < 1) || (opcionActual > 3)) {
                 System.out.println("Por favor escriba el número de la tarea a realizar:");
                 for (String opcion : opciones) { System.out.println(opcion); }
 
@@ -69,6 +70,10 @@ public class Main {
                     break;
 
                 case 2:
+                    mostrarHashMaps(hashMapPorCodigo, hashMapPorNombre);
+                    break;
+
+                case 3:
                     seguirEnLaApp = false;
                     continue; // Terminar iteración del while(seguirEnLaApp) para cerrar la aplicación.
 
@@ -178,6 +183,30 @@ public class Main {
             }
             System.out.println();
         }
+    }
+
+    public static void mostrarHashMaps(HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
+        if (hashMapPorCodigo.isEmpty()) {
+            System.out.println("Error: hashmap por codigo no inicializado aún!");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("hashMapPorCodigo: ");
+        System.out.println();
+        hashMapPorCodigo.forEach((key, value) -> System.out.println(key + " - " + value));
+
+        if (hashMapPorNombre.isEmpty()) {
+            System.out.println("Error: hashmap por nombre no inicializado aún!");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("-----------------------------------------------------------------------");
+        System.out.println();
+        System.out.println("hashMapPorNombre: ");
+        System.out.println();
+        hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
     }
 
     public static boolean confirmarSeguirEnLaApp() {
