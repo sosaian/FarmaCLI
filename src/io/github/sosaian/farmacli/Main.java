@@ -1,7 +1,9 @@
 package io.github.sosaian.farmacli;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +17,7 @@ public class Main {
     public static void main(String[] args) {
         // Declaración de variables globales de la aplicación*
         String CSV_PATH = System.getenv("FARMACLI_CSV_PATH");
+        String RESULT_PATH = System.getenv("FARMACLI_RESULT_PATH");
         String SEPARADOR = ";"; // Para poder rápidamente cambiarlo acorde al formato del archivo.
 
         // Se almacenan las categorías en un ArrayList aparte para mejorar la eficiencia de los demás métodos.
@@ -41,7 +44,8 @@ public class Main {
         List<String> opciones = List.of(
                 "1. Mostrar todo el listado de medicamentos",
                 "2. Mostrar los hashmaps",
-                "3. Salir de la aplicación"
+                "3. Buscar por código de medicamento",
+                "4. Salir de la aplicación"
         );
 
         boolean seguirEnLaApp = true;
@@ -55,7 +59,7 @@ public class Main {
 
             opcionActual = scanner.nextInt();
 
-            while ((opcionActual < 1) || (opcionActual > 3)) {
+            while ((opcionActual < 1) || (opcionActual > 4)) {
                 System.out.println("Por favor escriba el número de la tarea a realizar:");
                 for (String opcion : opciones) { System.out.println(opcion); }
 
@@ -74,6 +78,10 @@ public class Main {
                     break;
 
                 case 3:
+                    buscarPorCodigo(RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorCodigo);
+                    break;
+
+                case 4:
                     seguirEnLaApp = false;
                     continue; // Terminar iteración del while(seguirEnLaApp) para cerrar la aplicación.
 
@@ -207,6 +215,64 @@ public class Main {
         System.out.println("hashMapPorNombre: ");
         System.out.println();
         hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
+    }
+
+    public static void buscarPorCodigo(String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, Integer> hashMapPorCodigo) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println();
+        System.out.print("Ingrese el código del medicamento a buscar: ");
+        String codigoMedicamento = scanner.nextLine();
+
+        Integer indiceResultado = hashMapPorCodigo.get(codigoMedicamento);
+
+        System.out.println();
+
+        if (indiceResultado == null) {
+            System.out.println("No se encontró ninguna coincidencia!");
+            return;
+        }
+
+        String[] medicamento = VADEMECUM.get(indiceResultado);
+
+        //
+        //
+        // Mostrar resultado en consola
+        //
+        //
+
+        for (int i = 0; i < CATEGORIAS.size(); i++) {
+            System.out.print(CATEGORIAS.get(i));
+            System.out.print(": ");
+            System.out.print(medicamento[i]);
+
+            if (i < CATEGORIAS.size() - 1) { System.out.println(); }
+        }
+
+        System.out.println();
+
+        //
+        //
+        // Guardar resultado en un archivo .txt
+        //
+        //
+
+        String nombreArchivo = "resultado_codigo_medicamento_" + codigoMedicamento + ".txt";
+
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(RESULT_PATH + "\\" + nombreArchivo))) {
+            for (int i = 0; i < CATEGORIAS.size(); i++) {
+                bufferedWriter.write(CATEGORIAS.get(i));
+                bufferedWriter.write(": ");
+                bufferedWriter.write(medicamento[i]);
+
+                if (i < CATEGORIAS.size() - 1) { bufferedWriter.newLine(); }
+            }
+
+            System.out.println();
+            System.out.println("Resultados de esta búsqueda guardados en: " + RESULT_PATH + "\\" + nombreArchivo);
+        } catch (IOException e) {
+            System.err.println("Error al escribir en el archivo: " + e.getMessage());
+        }
     }
 
     public static boolean confirmarSeguirEnLaApp() {
