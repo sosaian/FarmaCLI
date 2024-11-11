@@ -244,8 +244,7 @@ public class Main {
     public static void buscarPorNombre(String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, List<Integer>> hashMapPorNombre) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println();
-        System.out.print("Ingrese el nombre del medicamento a buscar (o escriba 'salir' para cancelar): ");
+        System.out.print("\nIngrese el nombre del medicamento a buscar (o escriba 'salir' para cancelar): ");
         String nombreMedicamento = scanner.nextLine().trim();
 
         if (nombreMedicamento.equalsIgnoreCase("salir")) {
@@ -261,20 +260,54 @@ public class Main {
             return;
         }
 
-        System.out.println("Se encontraron los siguientes resultados:");
-        for (Integer indice : indicesResultado) {
-            String[] medicamento = VADEMECUM.get(indice);
+        // Creamos listadoMedicamentos aplicando un flujo de datos (Stream) en una sola línea:
+        // 1. `.stream()`: convierte indicesResultado en un flujo de sus elementos.
+        // 2. `.map(VADEMECUM::get)`: para cada índice en indicesResultado, obtenemos el elemento en VADEMECUM.
+        // 3. `.toList()`: recopila todos los elementos convertidos en una lista inmutable. (propio de Java 16)
 
-            for (int i = 0; i < CATEGORIAS.size(); i++) {
-                System.out.print(CATEGORIAS.get(i));
+        // Con este listado podemos simplificar el proceso de mostrar por consola y también enviar los resultados.
+
+        List<String[]> listadoMedicamentos = indicesResultado.stream().map(VADEMECUM::get).toList();
+
+        System.out.println("Se encontraron los siguientes resultados:");
+
+        for (int i = 0; i < listadoMedicamentos.size();  i++) {
+            String[] medicamento = listadoMedicamentos.get(i);
+
+            if (i != 0) { System.out.println(); }
+
+            for (int j = 0; j < CATEGORIAS.size(); j++) {
+                System.out.print(CATEGORIAS.get(j));
                 System.out.print(": ");
-                System.out.println(medicamento[i]);
+                System.out.print(medicamento[j]);
+
+                if (j < CATEGORIAS.size() - 1) {
+                    System.out.println();
+                }
             }
 
-            System.out.println("-----------------------------");
+            System.out.println("\n" + "-".repeat(40));
         }
 
-        guardarResultadosEnArchivo(scanner, RESULT_PATH, indicesResultado, VADEMECUM, CATEGORIAS);
+        String nombreArchivo = "resultados_nombre_medicamento_" + nombreMedicamento + ".txt";
+
+        System.out.println("\n¿Quieres guardar los resultados en un archivo aparte? (sí/no)");
+
+        boolean seguir;
+
+        do {
+            String respuesta = scanner.nextLine().trim().toLowerCase();
+
+            if (respuesta.equals("sí") || respuesta.equals("si")) {
+                guardarResultadosEnArchivo(RESULT_PATH, nombreArchivo, listadoMedicamentos, CATEGORIAS);
+                seguir = false;
+            } else if (respuesta.equals("no")) {
+                seguir = false;
+            } else {
+                System.out.println("\nPor favor responde 'sí' o 'no'.\n" + "-".repeat(16));
+                seguir = true;
+            }
+        } while (seguir);
     }
 
     public static void guardarResultadosEnArchivo(String RESULT_PATH, String NOMBRE_ARCHIVO, List<String[]> RESULTADOS, ArrayList<String> CATEGORIAS) {
