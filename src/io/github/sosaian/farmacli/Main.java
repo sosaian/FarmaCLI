@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -65,7 +66,7 @@ public class Main {
                     break;
 
                 case 3:
-                    buscarPorCodigo(RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorCodigo);
+                    handleBusquedaPorCodigo(scanner, RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorCodigo);
                     break;
 
                 case 4:
@@ -216,29 +217,12 @@ public class Main {
         hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
     }
 
-    public static void buscarPorCodigo(String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, Integer> hashMapPorCodigo) {
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println();
-        System.out.print("Ingrese el código del medicamento a buscar: ");
-        String codigoMedicamento = scanner.nextLine();
-
+    public static String[] buscarPorCodigo(String codigoMedicamento, ArrayList<String[]> VADEMECUM, HashMap<String, Integer> hashMapPorCodigo) {
         Integer indiceResultado = hashMapPorCodigo.get(codigoMedicamento);
 
-        if (indiceResultado == null) {
-            System.out.println("No se encontró ninguna coincidencia!");
-            return;
-        }
+        if (indiceResultado == null) { return null; }
 
-        String[] medicamento = VADEMECUM.get(indiceResultado);
-
-        for (int i = 0; i < CATEGORIAS.size(); i++) {
-            System.out.print(CATEGORIAS.get(i));
-            System.out.print(": ");
-            System.out.println(medicamento[i]);
-        }
-
-        guardarResultadosEnArchivo(scanner, RESULT_PATH, medicamento);
+        return VADEMECUM.get(indiceResultado);
     }
 
     public static List<String[]> buscarPorNombre(String nombreMedicamento, ArrayList<String[]> VADEMECUM, HashMap<String, List<Integer>> hashMapPorNombre) {
@@ -281,6 +265,56 @@ public class Main {
         } catch (IOException e) {
             System.out.println("\nError al guardar los resultados: " + e.getMessage());
         }
+    }
+
+    public static void handleBusquedaPorCodigo(Scanner scanner, String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, Integer> hashMapPorCodigo) {
+        System.out.print("\nIngrese el código del medicamento a buscar (o escriba 'salir' para cancelar): ");
+        String codigoMedicamento = scanner.nextLine().trim().toLowerCase();
+
+        if (codigoMedicamento.equalsIgnoreCase("salir")) {
+            System.out.println("\nSaliendo del proceso de búsqueda.");
+            return;
+        }
+
+        // BÚSQUEDA
+
+        final String[] RESULTADO = buscarPorCodigo(codigoMedicamento, VADEMECUM, hashMapPorCodigo);
+
+        assert RESULTADO != null;
+        if (RESULTADO.length == 0) {
+            System.out.println("No se encontraron resultados para el código de medicamento \"" + codigoMedicamento + "\".");
+            return;
+        }
+
+        // RESULTADO
+
+        System.out.println("Se encontró el siguiente medicamento:");
+        for (int i = 0; i < CATEGORIAS.size(); i++) {
+            System.out.print(CATEGORIAS.get(i));
+            System.out.print(": ");
+            System.out.println(RESULTADO[i]);
+        }
+
+        // GUARDAR ARCHIVO
+        String nombreArchivo = "resultados_codigo_medicamento_" + codigoMedicamento + ".txt";
+
+        System.out.println("\n¿Quieres guardar el resultado en un archivo aparte? (sí/no)");
+
+        boolean seguir;
+
+        do {
+            String respuesta = scanner.nextLine().trim().toLowerCase();
+
+            if (respuesta.equals("sí") || respuesta.equals("si")) {
+                guardarResultadosEnArchivo(RESULT_PATH, nombreArchivo, Collections.singletonList(RESULTADO), CATEGORIAS);
+                seguir = false;
+            } else if (respuesta.equals("no")) {
+                seguir = false;
+            } else {
+                System.out.println("\nPor favor responde 'sí' o 'no'.\n" + "-".repeat(16));
+                seguir = true;
+            }
+        } while (seguir);
     }
 
     public static void handleBusquedaPorNombre(Scanner scanner, String RESULT_PATH, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, HashMap<String, List<Integer>> hashMapPorNombre) {
