@@ -40,7 +40,7 @@ public class Main {
         System.out.println("Bienvenido a FarmaCLI!");
 
         // Listado de tareas para realizar con la aplicación.
-        List<String> opciones = List.of(
+        final List<String> OPCIONES = List.of(
                 "1. Mostrar todo el listado de medicamentos",
                 "2. Mostrar los hashmaps",
                 "3. Buscar por código de medicamento",
@@ -53,10 +53,7 @@ public class Main {
 
         while (seguirEnLaApp) {
             System.out.println();
-            System.out.println("Menú principal - Escriba el número de la tarea a realizar:");
-            for (String opcion : opciones) { System.out.println(opcion); }
-
-            int opcionActual = obtenerOpcionValida(scanner);  // Validación de entrada para la opción
+            int opcionActual = handleMenuPrincipal(scanner, OPCIONES);
 
             switch (opcionActual) {
                 case 1:
@@ -94,23 +91,35 @@ public class Main {
         scanner.close(); // Cierro el scanner para prevenir filtrado de información
     }
 
-    // Método para obtener una opción válida del usuario
-    public static int obtenerOpcionValida(Scanner scanner) {
-        int opcion = -1;
-        while (opcion < 1 || opcion > 5) {
-            System.out.println("Por favor ingrese una opción válida:");
-            try {
-                opcion = Integer.parseInt(scanner.nextLine()); // Intentamos leer un número
-            } catch (NumberFormatException e) {
-                System.out.println("¡Error! Debe ingresar un número válido.");
-                continue; // Si no es un número, volvemos a pedir la opción
+    public static int handleMenuPrincipal(Scanner scanner, List<String> OPCIONES) {
+        // Nota: Este menú principal asume que OPCIONES.size() es de al menos 1.
+        System.out.println("Menú principal - Escriba el número de la tarea a realizar:");
+        for (String opcion : OPCIONES) { System.out.println(opcion); }
+
+        final int MAX_OPCIONES = OPCIONES.size();
+        int opcionActual = -1;
+        boolean opcionInvalida;
+
+        do {
+            if (scanner.hasNextInt()) {
+                opcionActual = scanner.nextInt();
+
+                opcionInvalida = opcionActual < 1 || opcionActual > MAX_OPCIONES;
+
+                if (opcionInvalida) {
+                    System.out.println("\nPor favor, ingrese una opción válida (entre 1 y " + MAX_OPCIONES + "):");
+                }
+            } else {
+                // El input no es un entero
+                System.out.println("\nEntrada no válida. Por favor ingresa un número entero.");
+
+                opcionInvalida = true; // Mantenemos el ciclo activo, ya que no es una opción válida
             }
-            
-            if (opcion < 1 || opcion > 5) {
-                System.out.println("Opción no válida. Elija entre 1 y 5.");
-            }
-        }
-        return opcion;
+
+            scanner.nextLine(); // Limpia el búfer de entrada en cada iteración
+        } while (opcionInvalida);
+
+        return opcionActual;
     }
 
     public static void cargarDatosDesdeCSV(String ARCHIVO, String SEPARADOR, ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, ArrayList<Integer> maxAnchos, HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
