@@ -226,8 +226,7 @@ public class Main {
 
         final String[] RESULTADO = buscarPorCodigo(codigoMedicamento, VADEMECUM, hashMapPorCodigo);
 
-        assert RESULTADO != null;
-        if (RESULTADO.length == 0) {
+        if (RESULTADO == null || RESULTADO.length == 0) {
             System.out.println("No se encontraron resultados para el código de medicamento \"" + codigoMedicamento + "\".");
             return;
         }
