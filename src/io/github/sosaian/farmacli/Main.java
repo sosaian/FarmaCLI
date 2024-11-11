@@ -277,40 +277,30 @@ public class Main {
         guardarResultadosEnArchivo(scanner, RESULT_PATH, indicesResultado, VADEMECUM, CATEGORIAS);
     }
 
-    public static void guardarResultadosEnArchivo(Scanner scanner, String RESULT_PATH, String[] medicamento) {
-        System.out.println("¿Desea guardar los resultados en un archivo? (si/no)");
-        String respuestaGuardar = scanner.nextLine().trim().toLowerCase();
+    public static void guardarResultadosEnArchivo(String RESULT_PATH, String NOMBRE_ARCHIVO, List<String[]> RESULTADOS, ArrayList<String> CATEGORIAS) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(RESULT_PATH + "\\" + NOMBRE_ARCHIVO))) {
+            for (int i = 0; i < RESULTADOS.size(); i++) {
+                String[] resultado = RESULTADOS.get(i);
 
-        if (respuestaGuardar.equals("si")) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(RESULT_PATH))) {
-                for (String campo : medicamento) {
-                    writer.write(campo + ";");
-                }
-                writer.newLine();
-                System.out.println("Resultados guardados correctamente en " + RESULT_PATH);
-            } catch (IOException e) {
-                System.out.println("Error al guardar los resultados: " + e.getMessage());
-            }
-        }
-    }
+                if (i != 0) { writer.newLine(); }
 
-    public static void guardarResultadosEnArchivo(Scanner scanner, String RESULT_PATH, List<Integer> indicesResultado, ArrayList<String[]> VADEMECUM, ArrayList<String> CATEGORIAS) {
-        System.out.println("¿Desea guardar los resultados en un archivo? (si/no)");
-        String respuestaGuardar = scanner.nextLine().trim().toLowerCase();
+                for (int j = 0; j < CATEGORIAS.size(); j++) {
+                    writer.write(CATEGORIAS.get(j));
+                    writer.write(": ");
+                    writer.write(resultado[j]);
 
-        if (respuestaGuardar.equals("si")) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(RESULT_PATH))) {
-                for (Integer indice : indicesResultado) {
-                    String[] medicamento = VADEMECUM.get(indice);
-                    for (String campo : medicamento) {
-                        writer.write(campo + ";");
+                    if (j < CATEGORIAS.size() - 1) {
+                        writer.newLine();
                     }
-                    writer.newLine();
                 }
-                System.out.println("Resultados guardados correctamente en " + RESULT_PATH);
-            } catch (IOException e) {
-                System.out.println("Error al guardar los resultados: " + e.getMessage());
+
+                writer.newLine();
+                writer.write("-".repeat(40));
+                writer.newLine();
             }
+            System.out.println("\nResultados de esta búsqueda guardados en: " + RESULT_PATH + "\\" + NOMBRE_ARCHIVO);
+        } catch (IOException e) {
+            System.out.println("\nError al guardar los resultados: " + e.getMessage());
         }
     }
 
