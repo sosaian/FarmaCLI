@@ -38,56 +38,51 @@ public class Main {
         // Antes de iniciar, extraer información del CSV
         cargarDatosDesdeCSV(CSV_PATH, SEPARADOR, CATEGORIAS, VADEMECUM, maxAnchos, hashMapPorCodigo, hashMapPorNombre);
 
-        System.out.println("Bienvenido a FarmaCLI!");
+        System.out.println("Bienvenido a FarmaCLI!\n");
 
         // Listado de tareas para realizar con la aplicación.
         final List<String> OPCIONES = List.of(
-                "1. Mostrar todo el listado de medicamentos",
-                "2. Mostrar los hashmaps",
-                "3. Buscar por código de medicamento",
-                "4. Buscar por nombre de medicamento",
-                "5. Salir de la aplicación"
+                "1. Buscar por código de medicamento",
+                "2. Buscar por nombre de medicamento",
+                "3. Salir de la aplicación"
         );
 
         boolean seguirEnLaApp = true;
         Scanner scanner = new Scanner(System.in);
 
         while (seguirEnLaApp) {
-            System.out.println();
             int opcionActual = handleMenuPrincipal(scanner, OPCIONES);
 
             switch (opcionActual) {
                 case 1:
-                    mostrarVademecum(CATEGORIAS, VADEMECUM, maxAnchos);
-                    break;
-
-                case 2:
-                    mostrarHashMaps(hashMapPorCodigo, hashMapPorNombre);
-                    break;
-
-                case 3:
                     handleBusquedaPorCodigo(scanner, RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorCodigo);
                     break;
 
-                case 4:
+                case 2:
                     handleBusquedaPorNombre(scanner, RESULT_PATH, CATEGORIAS, VADEMECUM, hashMapPorNombre);
                     break;
 
-                case 5:
+                case 3:
                     seguirEnLaApp = false;
                     continue; // Terminar iteración del while(seguirEnLaApp) para cerrar la aplicación.
 
+                case 9:
+                    mostrarVademecum(CATEGORIAS, VADEMECUM, maxAnchos);
+                    break;
+
+                case 0:
+                    mostrarHashMaps(hashMapPorCodigo, hashMapPorNombre);
+                    break;
+
                 default:
-                    System.out.println("ERROR. De alguna forma la validación no funcionó!");
+                    System.out.println("ERROR. De alguna forma la validación del menú principal no funcionó!");
             }
 
-            System.out.println();
-            System.out.println("----------------");
+            System.out.println("\n" + "-".repeat(16) + "\n");
             seguirEnLaApp = confirmarSeguirEnLaApp(scanner);
         }
 
-        System.out.println();
-        System.out.println("Cerrando aplicación. Hasta luego!");
+        System.out.println("\n" + "-".repeat(16) + "\n\nCerrando aplicación. Hasta luego!");
 
         scanner.close(); // Cierro el scanner para prevenir filtrado de información
     }
@@ -101,9 +96,17 @@ public class Main {
         int opcionActual = -1;
         boolean opcionInvalida;
 
+        // OPCIONES EXTRA para métodos auxiliares para desarrolladores.
+        // 9. Mostrar el listado de medicamentos
+        // 0. Mostrar los hashmaps
+
         do {
             if (scanner.hasNextInt()) {
                 opcionActual = scanner.nextInt();
+
+                if (opcionActual == 0 || opcionActual == 9) {
+                    return opcionActual;
+                }
 
                 opcionInvalida = opcionActual < 1 || opcionActual > MAX_OPCIONES;
 
@@ -158,63 +161,6 @@ public class Main {
         } catch (IOException e) {
             System.out.println("Error al leer el archivo: " + e.getMessage());
         }
-    }
-
-    public static void mostrarVademecum(ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, ArrayList<Integer> maxAnchos) {
-        if (CATEGORIAS.isEmpty()) {
-            System.out.println("Error: Listado de categorías no inicializado aún!");
-            return;
-        }
-
-        if (VADEMECUM.isEmpty()) {
-            System.out.println("Error: Vademecum no inicializado aún!");
-            return;
-        }
-
-        for (int i = 0; i < CATEGORIAS.size(); i++) {
-            String fila = CATEGORIAS.get(i);
-            System.out.printf("%-" + (maxAnchos.get(i) + 1) + "s", fila);
-            if (i < CATEGORIAS.size() - 1) { System.out.print("| "); }
-        }
-
-        System.out.println();
-
-        for (int j = 0; j < maxAnchos.size(); j++) {
-            System.out.print("-".repeat(maxAnchos.get(j) + 1));
-            if (j < maxAnchos.size() - 1) {
-                System.out.print("+-");
-            }
-        }
-
-        System.out.println();
-
-        for (String[] fila : VADEMECUM) {
-            for (int j = 0; j < fila.length; j++) {
-                System.out.printf("%-" + (maxAnchos.get(j) + 1) + "s", fila[j]);
-                if (j < fila.length - 1) {
-                    System.out.print("| ");
-                }
-            }
-            System.out.println();
-        }
-    }
-
-    public static void mostrarHashMaps(HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
-        if (hashMapPorCodigo.isEmpty()) {
-            System.out.println("Error: hashmap por codigo no inicializado aún!");
-            return;
-        }
-
-        System.out.println("hashMapPorCodigo: ");
-        hashMapPorCodigo.forEach((key, value) -> System.out.println(key + " - " + value));
-
-        if (hashMapPorNombre.isEmpty()) {
-            System.out.println("Error: hashmap por nombre no inicializado aún!");
-            return;
-        }
-
-        System.out.println("hashMapPorNombre: ");
-        hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
     }
 
     public static String[] buscarPorCodigo(String codigoMedicamento, ArrayList<String[]> VADEMECUM, HashMap<String, Integer> hashMapPorCodigo) {
@@ -378,7 +324,7 @@ public class Main {
     }
 
     public static boolean confirmarSeguirEnLaApp(Scanner scanner) {
-        System.out.println("\n¿Quieres realizar otra acción? (sí/no)");
+        System.out.print("¿Quieres realizar otra acción? (sí/no): ");
 
         while (true) {
             String respuesta = scanner.nextLine().trim().toLowerCase();
@@ -388,8 +334,67 @@ public class Main {
             } else if (respuesta.equals("no")) {
                 return false;
             } else {
-                System.out.println("Por favor responde 'sí' o 'no'.\n" + "-".repeat(16));
+                System.out.print("\nPor favor responde 'sí' o 'no': ");
             }
         }
+    }
+
+    // Métodos auxiliares para desarrolladores.
+
+    public static void mostrarVademecum(ArrayList<String> CATEGORIAS, ArrayList<String[]> VADEMECUM, ArrayList<Integer> maxAnchos) {
+        if (CATEGORIAS.isEmpty()) {
+            System.out.println("Error: Listado de categorías no inicializado aún!");
+            return;
+        }
+
+        if (VADEMECUM.isEmpty()) {
+            System.out.println("Error: Vademecum no inicializado aún!");
+            return;
+        }
+
+        for (int i = 0; i < CATEGORIAS.size(); i++) {
+            String fila = CATEGORIAS.get(i);
+            System.out.printf("%-" + (maxAnchos.get(i) + 1) + "s", fila);
+            if (i < CATEGORIAS.size() - 1) { System.out.print("| "); }
+        }
+
+        System.out.println();
+
+        for (int j = 0; j < maxAnchos.size(); j++) {
+            System.out.print("-".repeat(maxAnchos.get(j) + 1));
+            if (j < maxAnchos.size() - 1) {
+                System.out.print("+-");
+            }
+        }
+
+        System.out.println();
+
+        for (String[] fila : VADEMECUM) {
+            for (int j = 0; j < fila.length; j++) {
+                System.out.printf("%-" + (maxAnchos.get(j) + 1) + "s", fila[j]);
+                if (j < fila.length - 1) {
+                    System.out.print("| ");
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    public static void mostrarHashMaps(HashMap<String, Integer> hashMapPorCodigo, HashMap<String, List<Integer>> hashMapPorNombre) {
+        if (hashMapPorCodigo.isEmpty()) {
+            System.out.println("Error: hashmap por codigo no inicializado aún!");
+            return;
+        }
+
+        System.out.println("\nhashMapPorCodigo: \n");
+        hashMapPorCodigo.forEach((key, value) -> System.out.println(key + " - " + value));
+
+        if (hashMapPorNombre.isEmpty()) {
+            System.out.println("Error: hashmap por nombre no inicializado aún!");
+            return;
+        }
+
+        System.out.println("\n" + "-".repeat(8) + "hashMapPorNombre: \n");
+        hashMapPorNombre.forEach((key, value) -> System.out.println(key + " - " + value));
     }
 }
