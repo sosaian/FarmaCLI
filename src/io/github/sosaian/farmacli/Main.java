@@ -315,9 +315,9 @@ public class Main {
     }
 
     public static boolean confirmarSeguirEnLaApp(Scanner scanner) {
+        System.out.println("\n¿Quieres realizar otra acción? (sí/no)");
+
         while (true) {
-            System.out.println();
-            System.out.println("¿Quieres realizar otra acción? (sí/no)");
             String respuesta = scanner.nextLine().trim().toLowerCase();
 
             if (respuesta.equals("sí") || respuesta.equals("si")) {
@@ -325,9 +325,7 @@ public class Main {
             } else if (respuesta.equals("no")) {
                 return false;
             } else {
-                System.out.println("Por favor responde 'sí' o 'no'.");
-                System.out.println();
-                System.out.println("----------------");
+                System.out.println("Por favor responde 'sí' o 'no'.\n" + "-".repeat(16));
             }
         }
     }
